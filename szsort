@@ -1,0 +1,25 @@
+#!/bin/bash
+
+NUMPROCS=
+
+if [[ -e /proc/cpuinfo ]]
+then
+  NUMPROCS=`grep -c ^processor /proc/cpuinfo`
+elif [  "$(uname)" == "Darwin"  ]
+then
+  NUMPROCS=`sysctl hw.ncpu | awk '{print $2}'`
+fi
+
+NUMPROCS=`expr $NUMPROCS - 1`
+LINES=`wc -l random.txt | awk '{ print $1 }'`
+SPLITS=`expr $LINES / $NUMPROCS`
+
+split -l$SPLITS $1 '_tmp';
+for object in `ls -1 _tmp*`
+do
+  sort -n $object -o $object &
+done
+wait;
+sort -n -m _tmp* 
+
+rm _tmp*
